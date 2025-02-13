@@ -53,16 +53,29 @@ The project is broken down into the following key phases:
 ## Key Insights
 
 - **Activity Levels**:  
-  Users average around **8,500 steps per day**—below the 10,000-step goal often recommended for a healthy lifestyle.
+   Users average around 8,500 steps per day, which is below the 10,000-step goal often recommended by the CDC for a healthy lifestyle.
+
+   67% of the day is spent being inactive, indicating a need for better engagement strategies from wellness device companies.
 
 - **Caloric Burn**:  
-  There is a clear positive correlation between daily steps and calories burned.
+  There is a positive correlation between daily steps and calories burned, meaning users who move more tend to lose more calories.
+
+  However, there is little to no correlation between steps taken and sleep duration, suggesting that physical activity does not significantly impact sleep patterns.
 
 - **Sleep Patterns**:  
-  On average, users sleep about **7 hours per night**, with minimal correlation between sleep duration and physical activity.
+   On average, users sleep about **7 hours per night**, with minimal correlation between sleep duration and physical activity.
 
 - **Usage Trends**:  
-  The data shows peak physical activity during lunch and early evening hours on weekdays, with a slight shift in patterns during weekends. Additionally, about **88% of users log data for more than 20 days per month**, indicating strong engagement with their fitness devices.
+   Users are most active during lunchtime and after work hours on weekdays and around midday on weekends.
+   Wellness companies should encourage movement in the morning and afternoon hours, where inactivity is higher.
+
+- **Device Engagement**:  
+   88% of users log data for more than 20 days per month, showing strong engagement with fitness tracking devices.
+   However, 12% of users use the tracker less frequently, highlighting the need for gamification, rewards, and reminders to improve consistency.
+
+- **Data Limitations**:  
+   Weight log and heart rate data are insufficient for detailed analysis. Encouraging users to enable these features could provide better insights.
+   The dataset was collected in 2016, before the 2020 pandemic, which significantly changed people's behavior. More recent data is needed for up-to-date consumer insights.
 
 ## Recommendations
 
