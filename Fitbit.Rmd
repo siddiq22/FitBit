@@ -1,0 +1,300 @@
+---
+title: "Fitbit"
+author: "Siddiq Khan"
+date: "2025-02-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+``` {r}
+library(tidyverse)
+```
+
+
+``` {r}
+library(janitor)
+```
+
+``` {r}
+activity <- read_csv("dailyActivity_merged.csv")
+```
+
+``` {r}
+h_steps <- read_csv("hourlySteps_merged.csv", col_names = TRUE)
+```
+
+
+
+``` {r}
+sleep <- read_csv("sleepDay_merged.csv", col_names = TRUE)
+
+```
+
+``` {r}
+weight <- read_csv("weightLogInfo_merged.csv")
+```
+
+
+``` {r}
+head(activity)
+```
+
+
+``` {r}
+glimpse(activity)
+```
+
+``` {r}
+head(h_steps)
+```
+
+``` {r}
+glimpse(h_steps)
+```
+
+``` {r}
+colnames(sleep)
+```
+
+``` {r}
+head(sleep)
+```
+
+``` {r}
+glimpse(sleep)
+```
+
+
+``` {r}
+head(weight)
+```
+
+``` {r}
+glimpse(weight)
+```
+
+
+``` {r}
+n_distinct(activity$Id)
+```
+
+
+``` {r}
+n_distinct(h_steps$Id)
+```
+
+
+``` {r}
+n_distinct(sleep$Id)
+```
+
+
+``` {r}
+n_distinct(weight$Id)
+```
+
+
+``` {r}
+sum(duplicated(activity))
+```
+
+
+``` {r}
+sum(duplicated(h_steps))
+```
+
+``` {r}
+sum(duplicated(sleep))
+```
+
+
+
+``` {r}
+sleep <- unique(sleep)
+sum(duplicated(sleep))
+```
+
+``` {r}
+clean_names(activity)
+```
+
+
+
+
+``` {r}
+ activity <- rename_with(activity, tolower)
+
+clean_names(sleep)
+```
+
+``` {r}
+ sleep <- rename_with(sleep, tolower)
+
+clean_names(h_steps)
+```
+
+``` {r}
+ h_steps <- rename_with(h_steps, tolower)
+```
+
+``` {r}
+ colnames(sleep)
+```
+
+``` {r}
+activity <- activity %>% 
+  rename(date = activitydate) %>%
+  mutate(date = as_date(date, format = "%m/%d/%Y"))
+
+sleep <- sleep %>%
+  rename(date = sleepday) %>%
+  mutate(date = as_date(date, format = "%m/%d/%Y  %I:%M:%S %p"))
+
+h_steps <- h_steps %>% 
+  rename(date_time = activityhour) %>% 
+  mutate(date_time = as.POSIXct(date_time, format="%m/%d/%Y %I:%M:%S %p"))
+```
+
+
+``` {r}
+activity_sleep <- merge(activity, sleep, by = c("id","date"), 
+                        all.x = TRUE) 
+head(activity_sleep)
+```
+
+
+
+``` {r}
+activity_sleep %>% 
+  select(totalsteps, calories, veryactiveminutes, fairlyactiveminutes, 
+         lightlyactiveminutes, sedentaryminutes, totalsleeprecords, 
+         totalminutesasleep, totaltimeinbed) %>% 
+  drop_na() %>% 
+  summary() 
+```
+
+
+``` {r}
+ggplot(data = activity_sleep, aes(x = totalsteps, y = calories))+
+  geom_point(alpha = 0.6)+
+  geom_smooth(size = 0.6, color = "green3")+
+  labs(title = "Correlation: Daily Steps vs Calories Loss", 
+       x = "Daily Steps", y = "Calories Loss")+
+  theme_minimal()
+```
+
+
+
+``` {r}
+ggplot(data = subset(activity_sleep, !is.na(totalminutesasleep)), 
+                     aes(x = totalsteps, y = totalminutesasleep))+
+  geom_point(alpha = 0.8)+
+  geom_smooth(size = 0.6, color = "green3")+
+  labs(title = "Correlation: Daily Steps vs Sleep Duration", 
+       x = "Daily Steps", y = "Sleep Duration")+
+  theme_minimal()
+```
+
+
+
+``` {r}
+h_steps <- h_steps %>% 
+  separate(date_time, into = c("date", "time"), sep = " ") %>% 
+  mutate(date = ymd (date))
+```
+
+
+``` {r}
+h_steps_weekday <- h_steps %>%
+  mutate(weekday = weekdays(date)) %>%
+  group_by(weekday, time) %>% 
+  summarize(average_steps = mean(steptotal), .groups = 'drop')
+
+h_steps_weekday$weekday <- ordered(h_steps_weekday$weekday, 
+                                  levels = c("Monday", "Tuesday", 
+                                           "Wednesday","Thursday",
+                                           "Friday", "Saturday", 
+                                           "Sunday"))
+```
+
+``` {r}
+ggplot(h_steps_weekday, aes(x= time, y= weekday, 
+                           fill= average_steps)) +
+  theme(axis.text.x = element_text(angle = 90))+
+  labs(title = "Active Time During the Week", 
+       x = " ", y = " ", fill = "average\nsteps")+
+  scale_fill_gradient(low = "white", high ="green3")+
+  geom_tile(color = "white",lwd =.6,linetype =1)+
+  coord_fixed()+
+  theme(plot.title = element_text(hjust = 0.5, vjust = 0.8, size = 15),
+        panel.background = element_blank())
+```
+
+
+``` {r}
+daily_average <- activity_sleep %>%
+  group_by(id) %>% 
+  summarize(avg_steps = mean(totalsteps), avg_calories = mean(calories), 
+            avg_sleep = mean(totalminutesasleep, na.rm = TRUE)) %>% 
+  mutate(user_type = case_when(
+    avg_steps < 5000 ~ "Sedentary",
+    avg_steps >= 5000 & avg_steps < 7499 ~ "Lightly active", 
+    avg_steps >= 7499 & avg_steps < 9999 ~ "Fairly active", 
+    avg_steps >= 9999 ~ "Very active"
+  ))
+```
+
+
+
+``` {r}
+user_type_sum <- daily_average %>% 
+  group_by(user_type) %>% 
+  summarize(total = n()) %>% 
+  mutate(total_proportion = total/sum(total))
+
+user_type_sum
+```
+
+``` {r}
+days_usage <- activity_sleep %>% 
+  group_by(id) %>% 
+  summarize(usage_days = n()) %>% 
+  mutate(usage_level = case_when(
+    usage_days >= 1 & usage_days <= 10 ~ "Low", 
+    usage_days >= 11 & usage_days <= 20 ~ "Midium",
+    usage_days >= 21 & usage_days <= 31 ~ "High",
+  ))
+```
+
+
+``` {r}
+usage_level_sum <- days_usage %>% 
+  group_by(usage_level) %>% 
+  summarize(user_count = n()) %>% 
+  mutate(total_proportion = user_count/sum(user_count))
+
+usage_level_sum
+```
+
+
+``` {r}
+avg_h_steps <- h_steps %>% 
+  group_by(time) %>% 
+  summarize(avg_steps = mean(steptotal))
+```
+
+
+``` {r}
+ggplot(data = avg_h_steps)+
+  geom_col(mapping = aes(x = time, y = avg_steps, fill = avg_steps))+ 
+  labs(title = "Average Hourly Steps Throughout the Day", x="", y="")+ 
+  scale_fill_gradient(low = "yellow2", high = "green3")+
+  theme(axis.text.x = element_text(angle = 90))
+```
+
